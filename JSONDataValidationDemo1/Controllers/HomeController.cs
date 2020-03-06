@@ -1,4 +1,6 @@
-﻿using System;
+﻿using JSONDataValidationDemo1.AppCode.Helpers;
+using JSONDataValidationDemo1.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -10,6 +12,8 @@ namespace JSONDataValidationDemo1.Controllers
     {
         public ActionResult Index()
         {
+            var InvalidObject = new Student() { ID = -7, Email = "someone@somewhere.com" };
+            Console.WriteLine(InvalidObject.ValidateModel<Student>());
             return View();
         }
 
