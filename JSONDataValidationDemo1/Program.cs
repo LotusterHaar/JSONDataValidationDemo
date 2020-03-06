@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace JSONDataValidationDemo1
 {
-    class Prgogram
+    class Program
     {
         static void Main(string[] args)
         {
