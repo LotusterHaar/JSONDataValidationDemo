@@ -18,7 +18,13 @@
             @Html.DisplayNameFor(model => model.FirstMidName)
         </th>
         <th>
+            @Html.DisplayNameFor(model => model.Email)
+        </th>
+        <th>
             @Html.DisplayNameFor(model => model.EnrollmentDate)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Comment)
         </th>
         <th></th>
     </tr>
@@ -32,7 +38,13 @@
             @Html.DisplayFor(modelItem => item.FirstMidName)
         </td>
         <td>
+            @Html.DisplayFor(modelItem => item.Email)
+        </td>
+        <td>
             @Html.DisplayFor(modelItem => item.EnrollmentDate)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Comment)
         </td>
         <td>
             @Html.ActionLink("Edit", "Edit", new { id=item.ID }) |
@@ -43,3 +55,7 @@
 }
 
 </table>
+<script>
+
+    var jsonData = @Html.Raw(Json.Encode(Model));
+</script>
