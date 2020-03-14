@@ -1,6 +1,5 @@
 ﻿using JSONDataValidationDemo1.DAL;
 using JSONDataValidationDemo1.Models;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -11,7 +10,6 @@ using System.Net;
 using System.Reflection;
 using System.Web;
 using System.Web.Mvc;
-using System.Web.UI;
 
 namespace JSONDataValidationDemo1.Controllers
 {
@@ -24,18 +22,19 @@ namespace JSONDataValidationDemo1.Controllers
         {
             return View(db.Students.ToList());
         }
-
-        public JsonResult StudentsJson()
+        
+        public ActionResult StudentsJson()
         {
-            var obj = new Student { ID = 0, FirstMidName = "Carson", Email = "lotus", LastName = "Alexander", EnrollmentDate = DateTime.Parse("2005-09-01") };
+            Student data = new Student { ID = 0, FirstMidName = "Carson", Email = "lotus", LastName = "Alexander", EnrollmentDate = DateTime.Parse("2005-09-01") };
 
-            Type type = obj.GetType();
+            Type type = data.GetType();
 
             IEnumerable<string> propertyNames = type.GetProperties().Select(p => p.Name);
-
-            List<Dictionary<string, string>> validationRules = new List<Dictionary<string, string>>();
+         
+            Dictionary<string, List<Dictionary<string, string>>> validation = new Dictionary<string, List<Dictionary<string, string>>>();
             foreach (string property in propertyNames)
             {
+                List<Dictionary<string, string>> validationRules = new List<Dictionary<string, string>>();
 
                 PropertyInfo propertyInfo = type.GetProperty(property);
 
@@ -43,10 +42,11 @@ namespace JSONDataValidationDemo1.Controllers
                 var metadata = ModelMetadataProviders.Current.GetMetadataForProperty(null, typeof(Student), property);
                 var rules = metadata.GetValidators(ControllerContext).SelectMany(v => v.GetClientValidationRules());
 
-                Dictionary<string, string> validationAttributes = new Dictionary<string, string>();
+                Dictionary<string, string> validationAttributes  = new Dictionary<string, string>();
 
                 foreach (ModelClientValidationRule rule in rules)
                 {
+                   
                     string key = "data-val-" + rule.ValidationType;
                     validationAttributes.Add(key, HttpUtility.HtmlEncode(rule.ErrorMessage ?? string.Empty));
                     key = key + "-";
@@ -57,15 +57,24 @@ namespace JSONDataValidationDemo1.Controllers
                                 pair.Value != null ? Convert.ToString(pair.Value, CultureInfo.InvariantCulture) : string.Empty));
                     }
 
+                    validationRules.Add(validationAttributes);
+                    validationAttributes = new Dictionary<string, string>();
                 }
-                validationRules.Add(validationAttributes);
 
+                validation.Add(property, validationRules);
                 System.Diagnostics.Debug.WriteLine($"name: {property}\n validationRules:{string.Join(Environment.NewLine, validationAttributes)}");
 
             }
 
-            obj.ValidationRules = validationRules;
-            return Json(obj, JsonRequestBehavior.AllowGet);
+           
+
+            var arrayOfObjects = new {data, validation};
+            //data.Merge(validation, new JsonMergeSettings
+            //{
+            //    MergeArrayHandling = MergeArrayHandling.Concat
+            //});
+
+            return Json(arrayOfObjects, JsonRequestBehavior.AllowGet);
         }
 
 
