@@ -2,7 +2,6 @@
 using JSONDataValidationDemo1.Models;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Data.Entity;
 using System.Globalization;
 using System.Linq;
@@ -22,27 +21,39 @@ namespace JSONDataValidationDemo1.Controllers
         {
             return View(db.Students.ToList());
         }
-        
+
         public ActionResult StudentsJson()
         {
             Student data = new Student { ID = 0, FirstMidName = "Carson", Email = "lotus", LastName = "Alexander", EnrollmentDate = DateTime.Parse("2005-09-01") };
 
             Type type = data.GetType();
 
-            IEnumerable<string> propertyNames = type.GetProperties().Select(p => p.Name);
-         
-            Dictionary<string, List<Dictionary<string, string>>> validation = new Dictionary<string, List<Dictionary<string, string>>>();
-            foreach (string property in propertyNames)
+
+            Dictionary<string, dynamic> form = new Dictionary<string, dynamic>();
+            Dictionary<string, dynamic> field = new Dictionary<string, dynamic>();
+            List<dynamic> fieldList = new List<dynamic>();
+            foreach (PropertyInfo property in type.GetProperties())
             {
+                string propertyName = property.Name;
+                string propertyType = property.PropertyType.ToString();
+                string propertyValue = string.Empty;
+                if (property.GetValue(data) != null)
+                    propertyValue = property.GetValue(data).ToString();
+                field.Add("Name", propertyName);
+                field.Add("Type", propertyType);
+                field.Add("Value", propertyValue);
+
+
+                System.Diagnostics.Debug.WriteLine($"Attributes: {propertyName}: {propertyType} - {propertyValue}");
                 List<Dictionary<string, string>> validationRules = new List<Dictionary<string, string>>();
 
-                PropertyInfo propertyInfo = type.GetProperty(property);
+                PropertyInfo propertyInfo = type.GetProperty(propertyName);
 
-                System.Diagnostics.Debug.WriteLine($"Attributes: {property}");
-                var metadata = ModelMetadataProviders.Current.GetMetadataForProperty(null, typeof(Student), property);
+                System.Diagnostics.Debug.WriteLine($"Attributes: {propertyName}");
+                var metadata = ModelMetadataProviders.Current.GetMetadataForProperty(null, typeof(Student), propertyName);
                 var rules = metadata.GetValidators(ControllerContext).SelectMany(v => v.GetClientValidationRules());
 
-                Dictionary<string, string> validationAttributes  = new Dictionary<string, string>();
+                Dictionary<string, string> validationAttributes = new Dictionary<string, string>();
 
                 foreach (ModelClientValidationRule rule in rules)
                 {
@@ -58,11 +69,15 @@ namespace JSONDataValidationDemo1.Controllers
                     validationRules.Add(validationAttributes);
                     validationAttributes = new Dictionary<string, string>();
                 }
-                validation.Add(property, validationRules);
+                field.Add("Validation", validationRules);
+                fieldList.Add(field);
+                field = new Dictionary<string, dynamic>();
             }
 
-            var arrayOfObjects = new { data, validation };
-            return Json(arrayOfObjects, JsonRequestBehavior.AllowGet);
+            form.Add($"Form_{data.GetType().ToString()}", fieldList);
+
+
+            return Json(form, JsonRequestBehavior.AllowGet);
         }
 
 

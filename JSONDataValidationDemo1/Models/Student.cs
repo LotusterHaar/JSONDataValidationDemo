@@ -17,6 +17,8 @@ namespace JSONDataValidationDemo1.Models
         [Required]
         [Annotations.EmailAddressAttribute(ErrorMessage = "Invalid email address")]
         public string Email { get; set; }
+        
+        //Telephone number
 
         public DateTime EnrollmentDate { get; set; }
 
