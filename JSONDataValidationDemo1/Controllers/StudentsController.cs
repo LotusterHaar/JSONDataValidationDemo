@@ -46,7 +46,6 @@ namespace JSONDataValidationDemo1.Controllers
 
                 foreach (ModelClientValidationRule rule in rules)
                 {
-                   
                     string key = "data-val-" + rule.ValidationType;
                     validationAttributes.Add(key, HttpUtility.HtmlEncode(rule.ErrorMessage ?? string.Empty));
                     key = key + "-";
@@ -56,24 +55,13 @@ namespace JSONDataValidationDemo1.Controllers
                             HttpUtility.HtmlAttributeEncode(
                                 pair.Value != null ? Convert.ToString(pair.Value, CultureInfo.InvariantCulture) : string.Empty));
                     }
-
                     validationRules.Add(validationAttributes);
                     validationAttributes = new Dictionary<string, string>();
                 }
-
                 validation.Add(property, validationRules);
-                System.Diagnostics.Debug.WriteLine($"name: {property}\n validationRules:{string.Join(Environment.NewLine, validationAttributes)}");
-
             }
 
-           
-
-            var arrayOfObjects = new {data, validation};
-            //data.Merge(validation, new JsonMergeSettings
-            //{
-            //    MergeArrayHandling = MergeArrayHandling.Concat
-            //});
-
+            var arrayOfObjects = new { data, validation };
             return Json(arrayOfObjects, JsonRequestBehavior.AllowGet);
         }
 
