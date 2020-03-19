@@ -5,10 +5,10 @@ using System.Web.Mvc;
 
 namespace JSONDataValidationDemo1.Annotations
 {
-    public class EmailAddressAttribute : RegularExpressionAttribute, IClientValidatable
+    public class EmailAttribute : RegularExpressionAttribute, IClientValidatable
     {
 
-        public EmailAddressAttribute() : base(@"^(([^<>()[\]\\.,;:\s@""]+(\.[^<>()[\]\\.,;:\s@""]+)*)|("".+""))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))")
+        public EmailAttribute() : base(@"^(([^<>()[\]\\.,;:\s@""]+(\.[^<>()[\]\\.,;:\s@""]+)*)|("".+""))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))")
         {
             System.Diagnostics.Debug.WriteLine(this.Pattern);
         }
@@ -17,7 +17,7 @@ namespace JSONDataValidationDemo1.Annotations
         {
             yield return new ModelClientValidationRegexRule(this.ErrorMessage, this.Pattern)
             {
-                ValidationType = "EmailAddress"
+                ValidationType = "email"
             };
         }
 

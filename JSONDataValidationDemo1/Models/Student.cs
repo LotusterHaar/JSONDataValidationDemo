@@ -15,7 +15,7 @@ namespace JSONDataValidationDemo1.Models
         public string FirstMidName { get; set; }
 
         [Required]
-        [Annotations.EmailAddressAttribute(ErrorMessage = "Invalid email address")]
+        [Annotations.EmailAttribute(ErrorMessage = "Invalid email address")]
         public string Email { get; set; }
         
         //Telephone number

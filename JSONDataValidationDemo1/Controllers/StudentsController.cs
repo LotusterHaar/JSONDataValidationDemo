@@ -29,13 +29,13 @@ namespace JSONDataValidationDemo1.Controllers
             Type type = data.GetType();
 
 
-            Dictionary<string, dynamic> form = new Dictionary<string, dynamic>();
+            List<dynamic> form = new List<dynamic>();
             Dictionary<string, dynamic> field = new Dictionary<string, dynamic>();
             List<dynamic> fieldList = new List<dynamic>();
             foreach (PropertyInfo property in type.GetProperties())
             {
                 string propertyName = property.Name;
-                string propertyType = property.PropertyType.ToString();
+                string propertyType = property.PropertyType.ToString().Replace("System.", "");
                 string propertyValue = string.Empty;
                 if (property.GetValue(data) != null)
                     propertyValue = property.GetValue(data).ToString();
@@ -57,7 +57,7 @@ namespace JSONDataValidationDemo1.Controllers
 
                 foreach (ModelClientValidationRule rule in rules)
                 {
-                    string key = "data-val-" + rule.ValidationType;
+                    string key = rule.ValidationType;
                     validationAttributes.Add(key, HttpUtility.HtmlEncode(rule.ErrorMessage ?? string.Empty));
                     key = key + "-";
                     foreach (KeyValuePair<string, object> pair in rule.ValidationParameters)
@@ -74,7 +74,7 @@ namespace JSONDataValidationDemo1.Controllers
                 field = new Dictionary<string, dynamic>();
             }
 
-            form.Add($"Form_{data.GetType().ToString()}", fieldList);
+            form.Add(fieldList);
 
 
             return Json(form, JsonRequestBehavior.AllowGet);
