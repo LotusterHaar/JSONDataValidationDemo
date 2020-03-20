@@ -43,13 +43,10 @@ namespace JSONDataValidationDemo1.Controllers
                 field.Add("Type", propertyType);
                 field.Add("Value", propertyValue);
 
-
-                System.Diagnostics.Debug.WriteLine($"Attributes: {propertyName}: {propertyType} - {propertyValue}");
                 List<Dictionary<string, string>> validationRules = new List<Dictionary<string, string>>();
 
                 PropertyInfo propertyInfo = type.GetProperty(propertyName);
 
-                System.Diagnostics.Debug.WriteLine($"Attributes: {propertyName}");
                 var metadata = ModelMetadataProviders.Current.GetMetadataForProperty(null, typeof(Student), propertyName);
                 var rules = metadata.GetValidators(ControllerContext).SelectMany(v => v.GetClientValidationRules());
 
