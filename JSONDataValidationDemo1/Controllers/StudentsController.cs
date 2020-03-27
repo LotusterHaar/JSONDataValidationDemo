@@ -1,7 +1,9 @@
 ﻿using JSONDataValidationDemo1.DAL;
 using JSONDataValidationDemo1.Models;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Data.Entity;
 using System.Globalization;
 using System.Linq;
@@ -77,6 +79,33 @@ namespace JSONDataValidationDemo1.Controllers
             return Json(form, JsonRequestBehavior.AllowGet);
         }
 
+        [HttpPost]
+        public JsonResult ValidateData(Student studentData)
+        {
+            string studentDataString = JsonConvert.SerializeObject(studentData);
+
+            var user1 = new Course();
+            var context = new ValidationContext(studentData, null, null);
+            var results = new List<ValidationResult>();
+            Validator.TryValidateObject(studentData, context, results, true);
+
+            if (results.Count > 0)
+            {
+                foreach (var item in results)
+                {
+
+                    System.Diagnostics.Debug.WriteLine($"{item.GetType()} = {item.ErrorMessage}");
+                }
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"{results.GetType()} = Success");
+            }
+
+            System.Diagnostics.Debug.WriteLine($"StudentData = {studentDataString}");
+            return Json(studentData, JsonRequestBehavior.AllowGet);
+        }
+
 
         // GET: Students/Details/5
         public ActionResult Details(int? id)
@@ -104,8 +133,67 @@ namespace JSONDataValidationDemo1.Controllers
         // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind(Include = "ID,LastName,FirstMidName,Email,EnrollmentDate,Comment")] Student student)
+        public ActionResult Create([Bind(Include = "ID,LastName,FirstMidName,Email,EnrollmentDate,Comment")] Student data)
         {
+            Student student = new Student { ID = 0, FirstMidName = "L.A.", Email = "lotus", LastName = "Haar1", EnrollmentDate = DateTime.Parse("2005-09-01") };
+            string studentDataString = JsonConvert.SerializeObject(student);
+            System.Diagnostics.Debug.WriteLine($"{studentDataString}");
+
+            Type type = student.GetType();
+            System.Diagnostics.Debug.WriteLine($"Type = {type.ToString()}");
+            foreach (PropertyInfo property in type.GetProperties())
+            {
+                string propertyName = property.Name;
+
+                var propertyValue = property.GetValue(student);
+                var context = new ValidationContext(student) { MemberName = propertyName };
+                var results = new List<ValidationResult>();
+                var valid = Validator.TryValidateProperty(propertyValue, context, results);
+                if(results.Count == 0)
+                {
+                    System.Diagnostics.Debug.WriteLine($"{propertyName} = success");
+                }
+                else
+                {
+                    foreach (ValidationResult result in results)
+                    {
+                      
+                        foreach(var membername in result.MemberNames)
+                        {
+                          
+                            var metadata = ModelMetadataProviders.Current.GetMetadataForProperty(null, typeof(Student), membername);
+                            var rules = metadata.GetValidators(ControllerContext).SelectMany(v => v.GetClientValidationRules());
+
+                            Dictionary<string, string> validationAttributes = new Dictionary<string, string>();
+
+                            foreach (ModelClientValidationRule rule in rules)
+                            {
+                                var context2 = new ValidationContext(student) { MemberName = membername };
+                                var results2 = new List<ValidationResult>();
+                                var valid2 = Validator.TryValidateProperty(propertyValue, context, results);
+
+                                string key = rule.ValidationType;
+
+                                validationAttributes.Add(key, HttpUtility.HtmlEncode(rule.ErrorMessage ?? string.Empty));
+                                key = key + "-";
+                                foreach (KeyValuePair<string, object> pair in rule.ValidationParameters)
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"{propertyName}: {key + pair.Key}= {valid}");
+                                    validationAttributes.Add(key + pair.Key,
+                                        HttpUtility.HtmlAttributeEncode(
+                                            pair.Value != null ? Convert.ToString(pair.Value, CultureInfo.InvariantCulture) : string.Empty));
+                                }
+                                //System.Diagnostics.Debug.WriteLine($"{propertyName}: {key}= {valid}");
+
+                            }
+            
+                        }
+                       
+                    }
+                }
+        
+            }
+
             if (ModelState.IsValid)
             {
                 db.Students.Add(student);

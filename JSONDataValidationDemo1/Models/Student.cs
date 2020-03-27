@@ -1,4 +1,5 @@
 ﻿using JSONDataValidationDemo1.Annotations;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -26,24 +27,7 @@ namespace JSONDataValidationDemo1.Models
 
         [MaxLength(255, ErrorMessage = "Comment too long")]
         public string Comment { get; set; }
-        //public List<Dictionary<string, string>> ValidationRules
-        //{
 
-        //    get; set;
-
-        //    //get
-        //    //{
-        //    //    Dictionary<string, string> dict = new Dictionary<string, string>() { { "a.1", "Dog" }, { "a.2", "Cat" }, { "a.3", "Pig" } };
-        //    //    List<Dictionary<string, string>> list = new List<Dictionary<string, string>>();
-        //    //    list.Add(dict);
-        //    //    return list;
-        //    //}
-        //    //set
-        //    //{
-        //    //    ValidationRules = value;
-        //    //}
-
-        //}
 
     }
 }
