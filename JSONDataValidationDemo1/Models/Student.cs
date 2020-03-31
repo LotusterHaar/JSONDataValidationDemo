@@ -9,8 +9,10 @@ namespace JSONDataValidationDemo1.Models
     public class Student
     {
         [Required(ErrorMessage = "Id is required")]
-        [Range(1, int.MaxValue)]
+        [Range(1, 1024)]
         public int ID { get; set; }
+
+        [Required]
         public string LastName { get; set; }
         [RegularExpression (pattern: @"^[A-Z][a-zA-Z]*$", ErrorMessage ="Invalid last name validated with custom regex")]
         public string FirstMidName { get; set; }
