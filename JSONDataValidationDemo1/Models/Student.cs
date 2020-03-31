@@ -1,7 +1,5 @@
-﻿using JSONDataValidationDemo1.Annotations;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace JSONDataValidationDemo1.Models
@@ -18,7 +16,7 @@ namespace JSONDataValidationDemo1.Models
         public string FirstMidName { get; set; }
 
         [Required]
-        [Annotations.EmailAttribute(ErrorMessage = "Invalid email address")]
+        [Annotations.Email(ErrorMessage = "Invalid email address")]
         public string Email { get; set; }
         
         //Telephone number

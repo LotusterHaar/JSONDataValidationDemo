@@ -1,6 +1,6 @@
 ﻿using JSONDataValidationDemo1.DAL;
+using JSONDataValidationDemo1.Extensions;
 using JSONDataValidationDemo1.Models;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -30,20 +30,20 @@ namespace JSONDataValidationDemo1.Controllers
 
             Type type = data.GetType();
 
-
             List<dynamic> form = new List<dynamic>();
             Dictionary<string, dynamic> field = new Dictionary<string, dynamic>();
-            List<dynamic> fieldList = new List<dynamic>();
             foreach (PropertyInfo property in type.GetProperties())
             {
                 string propertyName = property.Name;
                 string propertyType = property.PropertyType.ToString().Replace("System.", "");
+                if (property.PropertyType.IsNumericType())
+                    propertyType = "Number";
                 string propertyValue = string.Empty;
                 if (property.GetValue(data) != null)
                     propertyValue = property.GetValue(data).ToString();
-                field.Add("Name", propertyName);
-                field.Add("Type", propertyType);
-                field.Add("Value", propertyValue);
+                field.Add("name", propertyName);
+                field.Add("type", propertyType);
+                field.Add("value", propertyValue);
 
                 List<Dictionary<string, string>> validationRules = new List<Dictionary<string, string>>();
 
@@ -68,41 +68,11 @@ namespace JSONDataValidationDemo1.Controllers
                     validationRules.Add(validationAttributes);
                     validationAttributes = new Dictionary<string, string>();
                 }
-                field.Add("Validation", validationRules);
-                fieldList.Add(field);
+                field.Add("validation", validationRules);
+                form.Add(field);
                 field = new Dictionary<string, dynamic>();
             }
-
-            form.Add(fieldList);
-
-
             return Json(form, JsonRequestBehavior.AllowGet);
-        }
-
-        [HttpPost]
-        public JsonResult ValidateData(Student studentData)
-        {
-            string studentDataString = JsonConvert.SerializeObject(studentData);
-
-            var user1 = new Course();
-            var context = new ValidationContext(studentData, null, null);
-            var results = new List<ValidationResult>();
-            Validator.TryValidateObject(studentData, context, results, true);
-
-            if (results.Count > 0)
-            {
-                foreach (var item in results)
-                {
-                    System.Diagnostics.Debug.WriteLine($"{item.GetType()} = {item.ErrorMessage}");
-                }
-            }
-            else
-            {
-                System.Diagnostics.Debug.WriteLine($"{results.GetType()} = Success");
-            }
-
-            System.Diagnostics.Debug.WriteLine($"StudentData = {studentDataString}");
-            return Json(studentData, JsonRequestBehavior.AllowGet);
         }
 
 
@@ -135,24 +105,37 @@ namespace JSONDataValidationDemo1.Controllers
         public ActionResult Create([Bind(Include = "ID,LastName,FirstMidName,Email,EnrollmentDate,Comment")] Student data)
         {
             Student student = new Student { ID = 0, FirstMidName = "L.A.", Email = "lotus", LastName = "Haar1", EnrollmentDate = DateTime.Parse("2005-09-01") };
-            string studentDataString = JsonConvert.SerializeObject(student);
-            System.Diagnostics.Debug.WriteLine($"{studentDataString}");
 
             Type type = student.GetType();
-            System.Diagnostics.Debug.WriteLine($"Type = {type.ToString()}");
+
+
+            List<dynamic> form = new List<dynamic>();
+            Dictionary<string, dynamic> field = new Dictionary<string, dynamic>();
             foreach (PropertyInfo property in type.GetProperties())
             {
                 string propertyName = property.Name;
-
+                string propertyType = property.PropertyType.ToString().Replace("System.", "");
+                if (property.PropertyType.IsNumericType())
+                    propertyType = "Number";
+                string propertyValueString = "NULL";
                 var propertyValue = property.GetValue(student);
                 if (propertyValue != null)
                 {
+                    propertyValueString = property.GetValue(data).ToString();
+                    field.Add("name", propertyName);
+                    field.Add("type", propertyType);
+                    field.Add("value", propertyValueString);
+
+                    List<Dictionary<string, dynamic>> validationRules = new List<Dictionary<string, dynamic>>();
+                    Dictionary<string, dynamic> validationAttributes = new Dictionary<string, dynamic>();
+
                     var metadata = ModelMetadataProviders.Current.GetMetadataForProperty(null, typeof(Student), propertyName);
                     var rules = metadata.GetValidators(ControllerContext).SelectMany(v => v.GetClientValidationRules());
                     foreach (ModelClientValidationRule rule in rules)
                     {
 
                         string key = rule.ValidationType;
+                        validationAttributes.Add(key, HttpUtility.HtmlEncode(rule.ErrorMessage ?? string.Empty));
                         System.Diagnostics.Debug.WriteLine(key, HttpUtility.HtmlEncode(rule.ErrorMessage ?? string.Empty));
                         key = key + "-";
                         var context = new ValidationContext(propertyValue, null, null);
@@ -168,31 +151,46 @@ namespace JSONDataValidationDemo1.Controllers
                             if (!Validator.TryValidateValue(propertyValue, context, results, singleAttributeList))
                             {
                                 foreach (var result in results)
-                                {  
+                                {
                                     foreach (KeyValuePair<string, object> pair in rule.ValidationParameters)
                                     {
-                                        System.Diagnostics.Debug.WriteLine($"{propertyName}: VALUE= { pair.Value} " + (key + pair.Key,
+                                        validationAttributes.Add(key + pair.Key,
                                             HttpUtility.HtmlAttributeEncode(
-                                                pair.Value != null ? Convert.ToString(pair.Value, CultureInfo.InvariantCulture) : string.Empty)));
+                                                 pair.Value != null ? Convert.ToString(pair.Value, CultureInfo.InvariantCulture) : string.Empty));
                                     }
-                                    if (attribute.FormatErrorMessage(propertyName).Equals(HttpUtility.HtmlEncode(rule.ErrorMessage ?? string.Empty)))
+
+                                    if (attribute.FormatErrorMessage(propertyName).Equals(rule.ErrorMessage))
                                     {
-                                        System.Diagnostics.Debug.WriteLine($"{propertyName}: {key} =  FALSE");
+
+                                        validationAttributes.Add("isValid", false);
                                     }
                                     else
                                     {
-
+                                        validationAttributes.Add("isValid", true);
                                         System.Diagnostics.Debug.WriteLine($"{propertyName}: {key} =  TRUE ---- {attribute.FormatErrorMessage(propertyName)} != {HttpUtility.HtmlEncode(rule.ErrorMessage ?? string.Empty)}");
-                                    } 
-                                  
+                                    }
                                 }
                             }
                         }
+                        validationRules.Add(validationAttributes);
+                        validationAttributes = new Dictionary<string, dynamic>();
                     }
+                    field.Add("validation", validationRules);
+                    form.Add(field);
+                    field = new Dictionary<string, dynamic>();
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine($"{propertyName} - VALUE = NULL");
+                    List<Dictionary<string, dynamic>> validationRules = new List<Dictionary<string, dynamic>>();
+                    Dictionary<string, dynamic> validationAttributes = new Dictionary<string, dynamic>();
+                    validationRules.Add(validationAttributes);
+
+                    field.Add("name", propertyName);
+                    field.Add("type", propertyType);
+                    field.Add("value", propertyValueString);
+                    field.Add("validation", validationRules);
+                    form.Add(field);
+                    field = new Dictionary<string, dynamic>();
                 }
             }
 
@@ -203,85 +201,8 @@ namespace JSONDataValidationDemo1.Controllers
                 return RedirectToAction("Index");
             }
 
-            return Json(student);
+            return Json(form, JsonRequestBehavior.AllowGet);
         }
-
-        //// POST: Students/Create
-        //// To protect from overposting attacks, please enable the specific properties you want to bind to, for 
-        //// more details see https://go.microsoft.com/fwlink/?LinkId=317598.
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public ActionResult Create([Bind(Include = "ID,LastName,FirstMidName,Email,EnrollmentDate,Comment")] Student data)
-        //{
-        //    Student student = new Student { ID = 0, FirstMidName = "L.A.", Email = "lotus", LastName = "Haar1", EnrollmentDate = DateTime.Parse("2005-09-01") };
-        //    string studentDataString = JsonConvert.SerializeObject(student);
-        //    System.Diagnostics.Debug.WriteLine($"{studentDataString}");
-
-        //    Type type = student.GetType();
-        //    System.Diagnostics.Debug.WriteLine($"Type = {type.ToString()}");
-        //    foreach (PropertyInfo property in type.GetProperties())
-        //    {
-        //        string propertyName = property.Name;
-
-        //        var propertyValue = property.GetValue(student);
-        //        if (propertyValue != null)
-        //        {
-        //            var context = new ValidationContext(propertyValue, null, null);
-        //            var results = new List<ValidationResult>();
-        //            var attributes = typeof(Student)
-        //                    .GetProperty(propertyName)
-        //                    .GetCustomAttributes(true)
-        //                    .OfType<ValidationAttribute>()
-        //                    .ToArray();
-        //            foreach (var attribute in attributes)
-        //            {
-        //                ValidationAttribute[] singleAttributeList = new ValidationAttribute[] { attribute };
-        //                if (!Validator.TryValidateValue(propertyValue, context, results, singleAttributeList))
-        //                {
-        //                    foreach (var result in results)
-        //                    {
-
-        //                         foreach(string membername in result.MemberNames)
-        //                        {
-        //                            Console.WriteLine($"MEMBERNAME: {membername}");
-        //                        }
-        //                        //string key = rule.ValidationType;
-        //                        //validationAttributes.Add(key, HttpUtility.HtmlEncode(rule.ErrorMessage ?? string.Empty));
-        //                        //key = key + "-";
-        //                        //foreach (KeyValuePair<string, object> pair in rule.ValidationParameters)
-        //                        //{
-        //                        //    validationAttributes.Add(key + pair.Key,
-        //                        //        HttpUtility.HtmlAttributeEncode(
-        //                        //            pair.Value != null ? Convert.ToString(pair.Value, CultureInfo.InvariantCulture) : string.Empty));
-        //                        //}
-        //                        System.Diagnostics.Debug.WriteLine($"{propertyName}:{Attribute.GetCustomAttribute(property, attribute.GetType())} = TYPEID: {Attribute.GetCustomAttribute(property, attribute.GetType())} =  ERROR: {result.ErrorMessage}");
-        //                        Attribute attr = (Attribute)Attribute.GetCustomAttribute(property, attribute.GetType());
-
-        //                        //RequiredAttribute attrib = (RequiredAttribute)property.GetCustomAttributes(typeof(RequiredAttribute), true)[0];
-        //                        //Console.WriteLine($"Required {attrib.ErrorMessage}");
-        //                    }
-        //                }
-        //                else
-        //                {
-        //                    System.Diagnostics.Debug.WriteLine($"{propertyName} - {propertyValue} = success");
-        //                }
-        //            }
-        //        }
-        //        else
-        //        {
-        //            System.Diagnostics.Debug.WriteLine($"{propertyName} - {propertyValue} = NULL");
-        //        }
-        //    }
-
-        //    if (ModelState.IsValid)
-        //    {
-        //        db.Students.Add(student);
-        //        db.SaveChanges();
-        //        return RedirectToAction("Index");
-        //    }
-
-        //    return Json(student);
-        //}
 
         // GET: Students/Edit/5
         public ActionResult Edit(int? id)
