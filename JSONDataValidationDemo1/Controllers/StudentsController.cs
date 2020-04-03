@@ -26,8 +26,16 @@ namespace JSONDataValidationDemo1.Controllers
 
         public ActionResult StudentsJson()
         {
-            Student data = new Student { ID = 0, FirstMidName = "Carson", Email = "lotus", LastName = "Alexander", EnrollmentDate = DateTime.Parse("2005-09-01") };
+            List<dynamic> form = new List<dynamic>();
 
+            Student data = new Student { ID = 0, FirstMidName = "Carson", Email = "lotus", LastName = "Alexander", EnrollmentDate = DateTime.Parse("2005-09-01") };
+            form  = ConvertObjectToJsonWithValidationRules(data);
+
+            return Json(form, JsonRequestBehavior.AllowGet);
+        }
+
+        public List<dynamic> ConvertObjectToJsonWithValidationRules<T>(T data)
+        {
             Type type = data.GetType();
 
             List<dynamic> form = new List<dynamic>();
@@ -72,9 +80,8 @@ namespace JSONDataValidationDemo1.Controllers
                 form.Add(field);
                 field = new Dictionary<string, dynamic>();
             }
-            return Json(form, JsonRequestBehavior.AllowGet);
+            return form;
         }
-
 
         // GET: Students/Details/5
         public ActionResult Details(int? id)
@@ -104,10 +111,23 @@ namespace JSONDataValidationDemo1.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Create([Bind(Include = "ID,LastName,FirstMidName,Email,EnrollmentDate,Comment")] Student data)
         {
+            List<dynamic> form = new List<dynamic>();
             Student student = new Student { ID = 0, FirstMidName = "L.A.", Email = "lotus", LastName = "Haar1", EnrollmentDate = DateTime.Parse("2005-09-01") };
+            form = ConvertObjectToJsonWithValidatedFields(student);
+            if (ModelState.IsValid)
+            {
+                db.Students.Add(student);
+                db.SaveChanges();
+                return RedirectToAction("Index");
+            }
 
-            Type type = student.GetType();
+            return Json(form, JsonRequestBehavior.AllowGet);
+        }
 
+        public List<dynamic> ConvertObjectToJsonWithValidatedFields<T>(T data)
+        {
+
+            Type type = data.GetType();
 
             List<dynamic> form = new List<dynamic>();
             Dictionary<string, dynamic> field = new Dictionary<string, dynamic>();
@@ -118,7 +138,7 @@ namespace JSONDataValidationDemo1.Controllers
                 if (property.PropertyType.IsNumericType())
                     propertyType = "Number";
                 string propertyValueString = "NULL";
-                var propertyValue = property.GetValue(student);
+                var propertyValue = property.GetValue(data);
                 if (propertyValue != null)
                 {
                     propertyValueString = property.GetValue(data).ToString();
@@ -193,19 +213,13 @@ namespace JSONDataValidationDemo1.Controllers
                     field = new Dictionary<string, dynamic>();
                 }
             }
-
-            if (ModelState.IsValid)
-            {
-                db.Students.Add(student);
-                db.SaveChanges();
-                return RedirectToAction("Index");
-            }
-
-            return Json(form, JsonRequestBehavior.AllowGet);
+            return form;
         }
 
-        // GET: Students/Edit/5
-        public ActionResult Edit(int? id)
+
+
+            // GET: Students/Edit/5
+            public ActionResult Edit(int? id)
         {
             if (id == null)
             {
