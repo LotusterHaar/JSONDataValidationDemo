@@ -151,6 +151,10 @@ namespace JSONDataValidationDemo1.Controllers
                                         System.Diagnostics.Debug.WriteLine($"{propertyName}: {key} =  TRUE ---- {attribute.FormatErrorMessage(propertyName)} != {HttpUtility.HtmlEncode(rule.ErrorMessage ?? string.Empty)}");
                                     }
                                 }
+                                if (!validationAttributes.ContainsKey("isValid"))
+                                {
+                                    validationAttributes.Add("isValid", true);
+                                }
                             }
                         }
                         validationRules.Add(validationAttributes);
