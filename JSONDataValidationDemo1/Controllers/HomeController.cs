@@ -116,8 +116,9 @@ namespace JSONDataValidationDemo1.Controllers
                     {
 
                         string key = rule.ValidationType;
-                        validationAttributes.Add(key, HttpUtility.HtmlEncode(rule.ErrorMessage ?? string.Empty));
-                        System.Diagnostics.Debug.WriteLine(key, HttpUtility.HtmlEncode(rule.ErrorMessage ?? string.Empty));
+                        validationAttributes.Add("rule", key);
+                        validationAttributes.Add("message", HttpUtility.HtmlEncode(rule.ErrorMessage ?? string.Empty));
+                        System.Diagnostics.Debug.WriteLine($"ValidationAttributes - {key}, {HttpUtility.HtmlEncode(rule.ErrorMessage ?? string.Empty)}");
                         key = key + "-";
                         var context = new ValidationContext(propertyValue, null, null);
                         var results = new List<ValidationResult>();
@@ -133,13 +134,18 @@ namespace JSONDataValidationDemo1.Controllers
                             {
                                 foreach (var result in results)
                                 {
+                                    List<dynamic> additionalValidationAttributes = new List<dynamic>();
+                                    Dictionary<string, dynamic> additionalValidationAttribute = new Dictionary<string, dynamic>();
                                     foreach (KeyValuePair<string, object> pair in rule.ValidationParameters)
                                     {
-                                        validationAttributes.Add(key + pair.Key,
-                                            HttpUtility.HtmlAttributeEncode(
+                                        additionalValidationAttribute.Add("rule", key + pair.Key);
+                                        additionalValidationAttribute.Add("message", HttpUtility.HtmlAttributeEncode(
                                                  pair.Value != null ? Convert.ToString(pair.Value, CultureInfo.InvariantCulture) : string.Empty));
+                                        additionalValidationAttributes.Add(additionalValidationAttribute);
+                                        additionalValidationAttribute = new Dictionary<string, dynamic>();
                                     }
-
+                                    validationAttributes.Add("additional-rules", additionalValidationAttributes);
+                                    additionalValidationAttributes = new List<dynamic>();
                                     if (attribute.FormatErrorMessage(propertyName).Equals(rule.ErrorMessage))
                                     {
 
@@ -151,11 +157,11 @@ namespace JSONDataValidationDemo1.Controllers
                                         System.Diagnostics.Debug.WriteLine($"{propertyName}: {key} =  TRUE ---- {attribute.FormatErrorMessage(propertyName)} != {HttpUtility.HtmlEncode(rule.ErrorMessage ?? string.Empty)}");
                                     }
                                 }
-                                if (!validationAttributes.ContainsKey("isValid"))
-                                {
-                                    validationAttributes.Add("isValid", true);
-                                }
                             }
+                        }
+                        if (!validationAttributes.ContainsKey("isValid"))
+                        {
+                            validationAttributes.Add("isValid", true);
                         }
                         validationRules.Add(validationAttributes);
                         validationAttributes = new Dictionary<string, dynamic>();
