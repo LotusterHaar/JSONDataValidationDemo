@@ -17,7 +17,7 @@ namespace JSONDataValidationDemo1.Controllers
         {
             List<dynamic> form = new List<dynamic>();
 
-            Student data = new Student { ID = 0, FirstMidName = "Carson", Email = "lotus", LastName = "Alexander", EnrollmentDate = DateTime.Parse("2005-09-01") };
+            Student data = new Student { ID = 0, FirstMidName = "Carson", Email = "lotus", LastName = "Alexander", EnrollmentDate = DateTime.Parse("2005-09-01"), Comment = "Dit is bericht is te lang" };
             form = ConvertObjectToJsonWithValidationRules(data);
 
             return Json(form, JsonRequestBehavior.AllowGet);
@@ -79,7 +79,7 @@ namespace JSONDataValidationDemo1.Controllers
         public ActionResult JsonValidatedFields()
         {
             List<dynamic> form = new List<dynamic>();
-            Student student = new Student { ID = 0, FirstMidName = "L.A.", Email = "lotus", LastName = "Haar1", EnrollmentDate = DateTime.Parse("2005-09-01") };
+            Student student = new Student { ID = 0, FirstMidName = "L.A.", Email = "lotus", LastName = "Haar", EnrollmentDate = DateTime.Parse("2005-09-01"), Comment = "Dit is bericht is te lang" };
             form = ConvertObjectToJsonWithValidatedFields(student);
            
             return Json(form, JsonRequestBehavior.AllowGet);
